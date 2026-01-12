@@ -1,0 +1,26 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Środowiska wirtualne (BARDZO WAŻNE) ---
+venv/
+srodowisko_cv/
+env/
+.venv/
+
+# --- Zmienne środowiskowe (TAJNE) ---
+.env
+
+# --- Pliki systemowe ---
+.DS_Store
+Thumbs.db
+
+# --- IDE (ustawienia edytora) ---
+.vscode/
+.idea/
+
+# --- Twoje dane (opcjonalnie) ---
+# Odkomentuj linię niżej, jeśli nie chcesz wysyłać żadnych PDFów
+# *.pdf
+# data/raw/

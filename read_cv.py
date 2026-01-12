@@ -4,10 +4,26 @@ import fitz  # pymupdf
 import pytesseract
 from pdf2image import convert_from_path
 from pathlib import Path
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-POPPLER_PATH = r'C:\Program Files\poppler-25.12.0\Library\bin' 
+import os
+import sys
+from dotenv import load_dotenv  # Wymaga: pip install python-dotenv
 
-RAW_DATA_DIR = Path("./inputdata/raw")
+# 1. Ładowanie konfiguracji z pliku .env (jeśli istnieje)
+load_dotenv()
+
+# 2. Konfiguracja Tesseract
+# Kod najpierw sprawdza plik .env. Jeśli tam pusto, zakłada, że Tesseract jest w PATH systemu.
+path_tesseract = os.getenv('TESSERACT_PATH')
+if path_tesseract:
+    import pytesseract
+    pytesseract.pytesseract.tesseract_cmd = path_tesseract
+
+# 3. Konfiguracja Poppler
+# Dodaje folder bin Popplera do ścieżek systemowych na czas działania programu
+path_poppler = os.getenv('POPPLER_PATH')
+if path_poppler:
+    os.environ["PATH"] += os.pathsep + path_poppler
+RAW_DATA_DIR = Path("./input_data/raw")
 OUTPUT_FILE = Path("./database/dataset_made_of_raw_cv.jsonl")
 
 ALL_ROLES = [
