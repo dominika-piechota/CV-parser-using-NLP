@@ -3,24 +3,19 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# --- Środowiska wirtualne (BARDZO WAŻNE) ---
+# VIRTUAL ENVIRONMENTS
 venv/
 srodowisko_cv/
 env/
 .venv/
 
-# --- Zmienne środowiskowe (TAJNE) ---
+# SYSTEM FILES 
 .env
 
-# --- Pliki systemowe ---
+# SYSTEM FILES
 .DS_Store
 Thumbs.db
 
-# --- IDE (ustawienia edytora) ---
+# IDE
 .vscode/
 .idea/
-
-# --- Twoje dane (opcjonalnie) ---
-# Odkomentuj linię niżej, jeśli nie chcesz wysyłać żadnych PDFów
-# *.pdf
-# data/raw/
