@@ -5,6 +5,8 @@
 ![NLP](https://img.shields.io/badge/NLP-TF--IDF%20%7C%20Regex-orange)
 ![ML](https://img.shields.io/badge/ML-Gradient%20Boosting-green)
 
+> **Academic Project:** This repository was developed as the final assignment for the **Data Management** course at the **University of Liège (ULiège)**.
+
 ## 01. Why do we need it?
 Many companies use **ATS (Applicant Tracking Systems)** that automatically analyze and filter CVs. People looking for a job often submit well-prepared CVs but do not receive replies.
 
