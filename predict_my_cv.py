@@ -2,45 +2,33 @@ import sys
 import json
 import joblib
 import numpy as np
-import fitz  # PyMuPDF - wymagane: pip install pymupdf
+import fitz  # PyMuPDF
 from pathlib import Path
 
-# --- BLOK BEZPIECZEŃSTWA: SPRAWDZANIE WERSJI ---
-# Skoro nie chcesz zmieniać środowiska ręcznie, ten kod przynajmniej
-# powie Ci jasno, dlaczego nie działa, zamiast wyrzucać dziwne błędy.
+# SAFETY 
 try:
     import pandas as pd
 except ImportError:
-    print("❌ BŁĄD: Brak biblioteki pandas.")
+    print("ERROR: IMPORT")
     sys.exit(1)
 except ValueError as e:
     if "numpy.dtype size changed" in str(e):
-        print("\n" + "!"*60)
-        print("❌ BŁĄD KRYTYCZNY ŚRODOWISKA (NUMPY VERSION CONFLICT)")
-        print("!"*60)
-        print("Twój Python ma zainstalowany NumPy 2.x, ale Pandas/Sklearn wymagają 1.x.")
-        print("Tego NIE DA się obejść w kodzie. Musisz wpisać w terminalu:")
+        print("ERROR: NUMPY VERSION CONFLICT")
         print('   pip install "numpy<2.0"')
-        print("!"*60 + "\n")
         sys.exit(1)
     raise e
 
-# --- IMPORTY Z PLIKU NLP.PY ---
+# Imports from nlp.py file
 try:
-    # Zakładamy, że plik nlp.py leży w tym samym folderze
     from nlp import clean_and_repair_text, nlp_clean_text, parse_cv_sections, structure_education_stream
 except ImportError as e:
-    print("❌ BŁĄD: Nie znaleziono pliku 'nlp.py' w tym folderze.")
-    print(f"Szczegóły: {e}")
+    print("ERROR: IMPORT FROM nlp.py")
+    print(f"More info: {e}")
     sys.exit(1)
 
-# ==============================================================================
-# KONFIGURACJA MODELU
-# ==============================================================================
-
+# CONFIGURATION OF MODEL
 MODEL_FILE = Path("./models/best_model_balanced.pkl")
 
-# Musi być zdefiniowane dla pickle
 def to_dense(X): return X.toarray()
 
 DEGREE_RANKING = {
@@ -57,15 +45,9 @@ ALL_POSSIBLE_ROLES = [
     "SAP Developer", "Tester"
 ]
 
-# ==============================================================================
-# FUNKCJE POMOCNICZE
-# ==============================================================================
-
+# TEXT EXTRACTION FUNCTION (SIMPLE VERSION)
+# Do not use OCR here, only digital text extraction
 def extract_text_simple(pdf_path):
-    """
-    Szybkie czytanie PDF. Zakłada, że plik jest cyfrowy (nie skan).
-    Nie używa OCR.
-    """
     text = ""
     try:
         with fitz.open(pdf_path) as doc:
@@ -91,21 +73,18 @@ def get_max_degree_rank(structured_edu_list):
     return max_rank
 
 def process_cv_for_model(file_path):
-    # 1. Odczyt bez OCR
-    print(f"📄 Czytanie pliku: {file_path.name}...")
+    print(f"Reading file: {file_path.name}...")
     raw_text = extract_text_simple(file_path)
     
     if not raw_text or len(raw_text) < 10:
-        print("⚠️  Plik wydaje się pusty lub jest zdjęciem (skanem).")
-        print("    Ten skrypt nie obsługuje OCR. Użyj pliku tekstowego/PDF cyfrowego.")
+        print("File is empty otr too short after text extraction.")
+        print("This does not manage scanned PDFs. Please upload a digital PDF.")
         return None
 
-    # 2. NLP z Twojego pliku nlp.py
-    print("🧹 Analiza NLP...")
+    print("NLP processing")
     clean_text = clean_and_repair_text(raw_text)
     parsed_data = parse_cv_sections(clean_text)
     
-    # 3. Ekstrakcja cech pod model
     skills_list = parsed_data.get("Extracted_Skills_List", [])
     skills_str = " ".join(skills_list)
     
@@ -128,40 +107,33 @@ def process_cv_for_model(file_path):
         "_display_edu": structured_edu
     }
 
-# ==============================================================================
-# GŁÓWNA LOGIKA
-# ==============================================================================
-
 def main(pdf_path):
     path = Path(pdf_path)
     if not path.exists():
-        print("❌ Plik nie istnieje.")
+        print("File does not exist.")
         return
 
-    # KROK 1: Przetwarzanie danych
     features = process_cv_for_model(path)
     if not features: return
 
-    print("\n--- ZNALEZIONE DANE ---")
-    print(f"🎓 Wykształcenie (Ranga {features['degree_rank']}):")
+    print("\nPROCESSED CV FEATURES:")
+    print(f"Education (Rank: {features['degree_rank']}):")
     for edu in features["_display_edu"]:
         print(f"   - {edu['degree']} ({edu['field_of_study']}) @ {edu['institution']}")
-    print(f"🛠️  Umiejętności: {', '.join(features['_display_skills'][:10])}...")
+    print(f"Skills: {', '.join(features['_display_skills'][:10])}...")
 
-    # KROK 2: Ładowanie modelu
     if not MODEL_FILE.exists():
-        print(f"❌ Nie znaleziono modelu: {MODEL_FILE}")
+        print(f"Model not found: {MODEL_FILE}")
         return
     
-    print("\n🧠 Uruchamianie modelu...")
+    print("\nModel loading")
     try:
         global to_dense
         model = joblib.load(MODEL_FILE)
     except Exception as e:
-        print(f"❌ Błąd ładowania modelu: {e}")
+        print(f"ERROR: model loading: {e}")
         return
 
-    # KROK 3: Predykcja
     rows = []
     for role in ALL_POSSIBLE_ROLES:
         rows.append({
@@ -175,26 +147,25 @@ def main(pdf_path):
     df_predict = pd.DataFrame(rows)
     scores = model.predict(df_predict)
 
-    # KROK 4: Wyniki
-    results = pd.DataFrame({"Rola": ALL_POSSIBLE_ROLES, "Score": scores})
+    results = pd.DataFrame({"Role": ALL_POSSIBLE_ROLES, "Score": scores})
     results = results.sort_values(by="Score", ascending=False).reset_index(drop=True)
 
     print("\n" + "="*40)
-    print(f"📊 DOPASOWANIE ZAWODOWE: {path.name}")
+    print(f"Role match score: {path.name}")
     print("="*40)
     
     for i, row in results.iterrows():
         sc = row['Score']
         bar = "█" * int(sc * 4)
-        print(f"{i+1}. {row['Rola']:<20} | {sc:.2f}/5.0 | {bar}")
+        print(f"{i+1}. {row['Role']:<20} | {sc:.2f}/5.0 | {bar}")
 
     print("="*40)
-    print(f"🏆 Rekomendacja: {results.iloc[0]['Rola']}")
+    print(f"Recomendation: {results.iloc[0]['Role']}")
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         main(sys.argv[1])
     else:
-        print("Użycie: python predict_my_cv.py plik.pdf")
-        f = input("Podaj ścieżkę do pliku PDF: ").strip('"')
+        print("Usage: python predict_my_cv.py file.pdf")
+        f = input("Enter the path to the PDF file: ").strip('"')
         if f: main(f)

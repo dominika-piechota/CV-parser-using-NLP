@@ -6,20 +6,19 @@ from pdf2image import convert_from_path
 from pathlib import Path
 import os
 import sys
-from dotenv import load_dotenv  # Wymaga: pip install python-dotenv
+from dotenv import load_dotenv  # pip install python-dotenv
 
-# 1. Ładowanie konfiguracji z pliku .env (jeśli istnieje)
+# Load environment variables from .env file
 load_dotenv()
 
-# 2. Konfiguracja Tesseract
-# Kod najpierw sprawdza plik .env. Jeśli tam pusto, zakłada, że Tesseract jest w PATH systemu.
+# Tesseract configuration, file .env should contain TESSERACT_PATH and POPPLER_PATH if needed
+# if there is no such variable, it is assumed that Tesseract and Poppler are in system PATH
 path_tesseract = os.getenv('TESSERACT_PATH')
 if path_tesseract:
     import pytesseract
     pytesseract.pytesseract.tesseract_cmd = path_tesseract
 
-# 3. Konfiguracja Poppler
-# Dodaje folder bin Popplera do ścieżek systemowych na czas działania programu
+# Poppler configuration - adds Poppler bin folder to system PATH for the runtime
 path_poppler = os.getenv('POPPLER_PATH')
 if path_poppler:
     os.environ["PATH"] += os.pathsep + path_poppler
@@ -31,6 +30,7 @@ ALL_ROLES = [
     "Java Developer", "Python Developer", "React Developer", "SQL Developer",
     "Web Developer", "SAP Developer", "Tester"
 ]
+
 # Assigning scores based on source category and target role
 SCORING_LOGIC = {
     "Business Analyst": {"Business Analyst": 5, "SQL Developer": 2, "SAP Developer": 2, "Data Scientist": 1},
