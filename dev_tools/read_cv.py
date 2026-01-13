@@ -22,8 +22,21 @@ if path_tesseract:
 path_poppler = os.getenv('POPPLER_PATH')
 if path_poppler:
     os.environ["PATH"] += os.pathsep + path_poppler
-RAW_DATA_DIR = Path("./input_data/raw")
-OUTPUT_FILE = Path("./database/dataset_made_of_raw_cv.jsonl")
+
+
+
+# Ustalanie ścieżek względem lokalizacji tego pliku (dev_tools/ten_plik.py)
+CURRENT_SCRIPT_PATH = Path(__file__).resolve()
+PROJECT_ROOT = CURRENT_SCRIPT_PATH.parent.parent  # Wyjście dwa razy w górę: plik -> dev_tools -> PROJEKT
+
+# Wczytanie .env z głównego katalogu (a nie z dev_tools)
+load_dotenv(PROJECT_ROOT / ".env")
+
+# Definicja ścieżek przy użyciu PROJECT_ROOT
+# Dzięki temu "./" nie jest już potrzebne, bo mamy pełną ścieżkę absolutną
+RAW_DATA_DIR = PROJECT_ROOT / "input_data" / "raw"
+OUTPUT_FILE = PROJECT_ROOT / "database" / "dataset_made_of_raw_cv.jsonl"
+
 
 ALL_ROLES = [
     "Business Analyst", "Data Scientist", "DevOps Engineer", "ETL Developer",
